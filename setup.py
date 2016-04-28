@@ -1,14 +1,13 @@
 # -*- encoding: utf8 -*-
-import glob
 import io
-import re
-from os.path import basename
 from os.path import dirname
 from os.path import join
-from os.path import splitext
-
 from setuptools import find_packages
 from setuptools import setup
+from multiprocessing import util
+
+execfile('src/environmentbase/version.py')
+
 
 def read(*names, **kwargs):
     return io.open(
@@ -18,20 +17,23 @@ def read(*names, **kwargs):
 
 setup(
     name="cfn-environment-base",
-    version="0.3.4",
-    license="ISC",
+
+    # Version is centrally managed from src/environmentbase/version.py
+    version=__version__,
+
     description="Base environment for Troposphere based CFN project environments",
     long_description="%s" % read("README.md"),
+
+    url='https://github.com/DualSpark/cloudformation-environmentbase',
+
     author="Patrick McClory",
     author_email="patrick@dualspark.com",
-    packages=find_packages("src"),
-    package_dir={"": "src"},
-    py_modules=[splitext(basename(i))[0] for i in glob.glob("src/*.py")],
-    include_package_data=True,
-    zip_safe=False,
+
+    license="ISC",
+
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: ISC License",
         "Operating System :: Unix",
@@ -46,23 +48,65 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Utilities",
+        "Topic :: Software Development :: Code Generators"
     ],
-    keywords=[
-        # eg: "keyword1", "keyword2", "keyword3",
-    ],
+
+    # keywords=["keyword1", "keyword2", "keyword3"],
+
+    # List out the packages to include when running build/install/distribute
+    packages=find_packages("src", exclude=['tests*']),
+
+    # For more fine grain control over modules included or excluded use py_modules
+    # py_modules=[splitext(basename(i))[0] for i in glob.glob("src/**/*.py")],
+
+    # Specifies the root/default package is below 'src'
+    package_dir={"": "src"},
+
     install_requires=[
-        "troposphere>=0.6.0",
-        "boto>=2.32.0",
+        "troposphere==1.1.2",
+        "jmespath==0.7.1",
+        "boto==2.38.0",
+        "botocore==1.1.1",
+        "boto3==1.1.0",
         "ipcalc==1.1.2",
-        "docopt==0.6.1",
+        "docopt==0.6.2",
+        "setuptools==17.1",
+        "awacs==0.5.3",
+        "commentjson==0.6",
+        "PyYAML==3.11",
+        "netaddr==0.7.18",
+        "toolz==0.7.4",
+        'pbr==1.8.0'
     ],
-    extras_require={
-        # eg: 'rst': ["docutils>=0.11"],
-    },
+
+    # Optional dependencies
+    extras_require={},
+
+    # This section is required for setuptools to auto-gen the cross platform wrapper script
+    # i.e. 'environmentbase --version' instead of 'python -m environmentbase --version'
     entry_points={
         "console_scripts": [
-            "environmentbase = environmentbase.environmentbase:main"
+            "environmentbase = environmentbase.__main__:main",
+            # "environmentutil = environmentutil.environmentutil:main",
+            # "awsbootstrap = environmentbase.accountbootstrap:main"
         ]
-    }
+    },
 
+    # If disabled, generated egg will only contain *.py files.
+    # Leave enabled so we can distribute factory default data w/in the packages
+    include_package_data=True,
+
+    # Enable if the package can run as a zip file (some performance improvements)
+    # Disable if it needs to run as an extracted zip inside <python>/site-packages
+    # Requires special resource handling for embedded data files, see:
+    # http://peak.telecommunity.com/DevCenter/PythonEggs#accessing-package-resources
+    zip_safe=True,
+
+    # Test runner and required testing packages
+    test_suite='nose2.collector.collector',
+    tests_require=[
+        'nose2==0.5.0',
+        'unittest2==1.1.0',
+        'mock==1.3.0'
+    ]
 )
